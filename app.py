@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
+import os
 
 from flask import Flask, jsonify, abort, request, make_response, url_for
 from flask_sqlalchemy import SQLAlchemy
-
 app = Flask(__name__, static_url_path="")
 
 
@@ -11,6 +11,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 db = SQLAlchemy(app)
 
 class Recipe(db.Model):
+    __tablename__ = 'recipes'
     id          = db.Column(db.Integer, primary_key=True)
     title       = db.Column(db.String(100),nullable=False)
     making_time = db.Column(db.String(100),nullable=False)
@@ -25,6 +26,16 @@ class Recipe(db.Model):
         self.ingredients = ingredients
         self.cost        = cost
 
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'making_time': self.making_time,
+            'serves': self.serves,
+            'ingredients': self.ingredients,
+            'cost': self.cost
+        }
+
 @app.errorhandler(400)
 def not_found(error):
     return make_response("", 400)
@@ -33,9 +44,6 @@ def not_found(error):
 def not_found(error):
     return make_response("", 404)
 
-recipes = []
-recipes_autoinc = 0
-
 
 @app.route('/', methods = ['GET'])
 def app_root():
@@ -43,12 +51,13 @@ def app_root():
 
 @app.route('/recipes', methods = ['GET'])
 def get_recipes():
-    return make_response(jsonify({'recipes': recipes}), 200)
+    return make_response(jsonify({'recipes': list(map( lambda r: r.as_dict(),Recipe.query.all()))}), 200)
 
 def answer_missing():
     return make_response(jsonify({'message': 'No Recipe found'}), 200)
 
 def find_recipe(recipe_id):
+    return Recipe.query.get(recipe_id)
     recipe = list(filter( lambda r: r['id'] == recipe_id, recipes))
     if len(recipe) == 0:
         return None
@@ -60,14 +69,15 @@ def get_recipe(recipe_id):
     recipe = find_recipe(recipe_id)
     if recipe is None:
         return answer_missing()
-    return make_response(jsonify( { 'message': 'Recipe details by id', 'recipe': recipe } ), 200);
+    return make_response(jsonify( { 'message': 'Recipe details by id', 'recipe': recipe.as_dict() } ), 200);
 
 @app.route('/recipes/<int:recipe_id>', methods = ['DELETE'])
 def delete_recipe(recipe_id):
     recipe = find_recipe(recipe_id)
     if recipe is None:
         return answer_missing()
-    recipes.remove(recipe)
+    db.session.delete(recipe)
+    db.session.commit()
     return make_response(jsonify({ 'message': 'Recipe successfully removed!' }), 200)
 
 def answer_bad_param():
@@ -98,28 +108,26 @@ def insert_recipe():
     title, making_time, serves, ingredients, cost = parse_recipe( request.data.decode("utf-8") )
     if title is None:
         return answer_bad_param()
-    recipe = {
-        'id': recipes_autoinc,
-        'title': title,
-        'making_time': making_time,
-        'serves': serves,
-        'ingredients': ingredients,
-        'cost' : cost
-    }
-    recipes.append(recipe)
-    recipes_autoinc = recipes_autoinc + 1
-    return make_response(jsonify({ 'message': 'Recipe successfully created!', 'recipe': recipe }), 200)
+    recipe = Recipe(title,making_time,serves,ingredients,cost)
+    db.session.add(me)
+    db.session.commit()
+    return make_response(jsonify({ 'message': 'Recipe successfully created!', 'recipe': recipe.as_dict() }), 200)
 
 @app.route('/recipes/<int:recipe_id>', methods = ['PATCH'])
 def update_recipe(recipe_id):
     recipe = find_recipe(recipe_id)
+    if recipe is None:
+        return answer_missing()
     title, making_time, serves, ingredients, cost = parse_recipe( request.data )
     if title is None:
         return answer_bad_param()
-    recipe.title = title
-    recipe.making_time = making_time
-    recipe.serves = serves
-    recipe.ingredients = ingredients
-    recipe.cost = cost
-    return make_response(jsonify({ 'message': 'Recipe successfully updated!', 'recipe': recipe }), 200)
+    recipe.update(
+            title = title,
+            making_time = making_time,
+            serves = serves,
+            ingredients = ingredients,
+            cost = cost
+        )
+    db.session.commit()
+    return make_response(jsonify({ 'message': 'Recipe successfully updated!', 'recipe': recipe.as_dict() }), 200)
     
