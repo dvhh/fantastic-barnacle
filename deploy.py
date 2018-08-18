@@ -7,4 +7,4 @@ conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 cur = conn.cursor()
 
 with open('create.sql', 'r') as fd:
-  cur.execute(fd.read)
+  cur.execute(fd.read())
