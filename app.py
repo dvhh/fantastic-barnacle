@@ -19,6 +19,10 @@ def not_found(error):
 recipes = []
 recipes_autoinc = 0
 
+@app.route('/', methods = ['GET'])
+def app_root():
+    return make_response( "", 200 );
+    
 @app.route('/recipes', methods = ['GET'])
 def get_recipes():
     return make_response(jsonify( { 'recipes': recipes } ), 200)
@@ -33,13 +37,13 @@ def find_recipe(recipe_id):
 @app.route('/recipes/<int:recipe_id>', methods = ['GET'])
 def get_recipe(recipe_id):
     recipe = find_recipe(recipe_id)
-    return jsonify( { 'message': 'Recipe details by id', 'recipe': recipe } );
+    return make_response(jsonify( { 'message': 'Recipe details by id', 'recipe': recipe } ), 200);
 
 @app.route('/recipes/<int:recipe_id>', methods = ['DELETE'])
 def delete_recipe(recipe_id):
     recipe = find_recipe(recipe_id)
     recipes.remove(recipe)
-    return jsonify({ 'message': 'Recipe successfully removed!' });
+    return make_response(jsonify({ 'message': 'Recipe successfully removed!' }), 200)
 
 def parse_recipe(input):
     #print(input)
@@ -71,7 +75,7 @@ def insert_recipe():
     }
     recipes.append(recipe)
     recipes_autoinc = recipes_autoinc + 1
-    return jsonify({ 'message': 'Recipe successfully created!', 'recipe': recipe });
+    return make_response(jsonify({ 'message': 'Recipe successfully created!', 'recipe': recipe }), 200)
 
 @app.route('/recipes/<int:recipe_id>', methods = ['PATCH'])
 def update_recipe(recipe_id):
@@ -82,5 +86,5 @@ def update_recipe(recipe_id):
     recipe.serves = serves
     recipe.ingredients = ingredients
     recipe.cost = cost
-    return jsonify({ 'message': 'Recipe successfully updated!', 'recipe': recipe });
+    return make_response(jsonify({ 'message': 'Recipe successfully updated!', 'recipe': recipe }), 200)
     
