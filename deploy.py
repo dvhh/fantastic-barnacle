@@ -8,3 +8,4 @@ cur = conn.cursor()
 
 with open('create.sql', 'r') as fd:
   cur.execute(fd.read())
+conn.commit()
