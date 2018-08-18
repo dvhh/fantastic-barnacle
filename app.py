@@ -109,7 +109,7 @@ def insert_recipe():
     if title is None:
         return answer_bad_param()
     recipe = Recipe(title,making_time,serves,ingredients,cost)
-    db.session.add(me)
+    db.session.add(recipe)
     db.session.commit()
     return make_response(jsonify({ 'message': 'Recipe successfully created!', 'recipe': recipe.as_dict() }), 200)
 
@@ -118,16 +118,15 @@ def update_recipe(recipe_id):
     recipe = find_recipe(recipe_id)
     if recipe is None:
         return answer_missing()
-    title, making_time, serves, ingredients, cost = parse_recipe( request.data )
+    title, making_time, serves, ingredients, cost = parse_recipe( request.data.decode("utf-8") )
     if title is None:
         return answer_bad_param()
-    recipe.update(
-            title = title,
-            making_time = making_time,
-            serves = serves,
-            ingredients = ingredients,
-            cost = cost
-        )
+    recipe.title = title
+    recipe.making_time = making_time
+    recipe.serves = serves
+    recipe.ingredients = ingredients
+    recipe.cost = cost
+
     db.session.commit()
     return make_response(jsonify({ 'message': 'Recipe successfully updated!', 'recipe': recipe.as_dict() }), 200)
     
