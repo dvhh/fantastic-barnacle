@@ -1,9 +1,29 @@
 # -*- coding: UTF-8 -*-
 
 from flask import Flask, jsonify, abort, request, make_response, url_for
-
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__, static_url_path="")
+
+
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:////tmp/recipes.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+db = SQLAlchemy(app)
+
+class Recipe(db.Model):
+    id          = db.Column(db.Integer, primary_key=True)
+    title       = db.Column(db.String(100),nullable=False)
+    making_time = db.Column(db.String(100),nullable=False)
+    serves      = db.Column(db.String(100),nullable=False)
+    ingredients = db.Column(db.String(300),nullable=False)
+    cost        = db.Column(db.Integer,nullable=False)
+
+    def __init__(self, title, making_time, serves, ingredients, cost):
+        self.title       = title
+        self.making_time = making_time
+        self.serves      = serves
+        self.ingredients = ingredients
+        self.cost        = cost
 
 @app.errorhandler(400)
 def not_found(error):
@@ -70,7 +90,7 @@ def parse_recipe(input):
         ingredients is None or \
         cost is None:
             return None
-    return title, making_time, serves, ingredients, cost
+    return title, making_time, serves, ingredients, int(cost)
 
 @app.route('/recipes', methods = ['POST'])
 def insert_recipe():
