@@ -1,2 +1,2 @@
-release: cat create.sql | heroku pg:psql
+release: python3 deploy.py
 web: gunicorn -b 0.0.0.0:$PORT app:app
