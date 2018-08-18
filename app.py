@@ -10,11 +10,11 @@ def not_found(error):
     return make_response(jsonify( { 
         'message': 'Recipe creation failed!',
         'required': 'title, making_time, serves, ingredients, cost'
-    } ), 400)
+    } ), 200)
 
 @app.errorhandler(404)
 def not_found(error):
-    return make_response(jsonify( { 'message': 'No Recipe found' } ), 404)
+    return make_response(jsonify( { 'message': 'No Recipe found' } ), 200)
 
 recipes = []
 recipes_autoinc = 0
